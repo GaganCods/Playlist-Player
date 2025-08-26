@@ -4,117 +4,164 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YouTube Playlist Player</title>
+
+  <!-- Favicon (can’t use SVG directly in favicon, use PNG) -->
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/4/42/YouTube_icon_%282013-2017%29.png">
+
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: #fff;
+      margin: 0;
+      padding: 0;
+      background: #181818;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .container {
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #202020;
+      width: 100%;
+      max-width: 1200px;
+      padding: 10px 20px;
+      margin: 10px auto 0 auto;
+      border-radius: 8px;
+    }
+
+    .header svg {
+      width: 24px;
+      height: 24px;
+      fill: #FF0000;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0;
+      color: white;
+    }
+
+    .input-container {
+      margin: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    input {
+      padding: 8px;
+      width: 280px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      padding: 8px 15px;
+      background: #cc0000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ff0000;
+    }
+
+    .player-container {
       display: flex;
       flex-direction: row;
-      gap: 10px;
-      padding: 10px;
+      gap: 20px;
+      width: 95%;
+      max-width: 1200px;
+      margin: 20px auto;
     }
 
-    /* Player section */
-    #player {
+    iframe {
       flex: 2;
-      aspect-ratio: 16 / 9;
-      background: #000;
+      width: 100%;
+      height: 500px;
       border-radius: 10px;
-      overflow: hidden;
+      border: none;
     }
 
-    /* Playlist section */
     .playlist {
       flex: 1;
-      max-height: 80vh;
+      max-height: 500px;
       overflow-y: auto;
-      background: #181818;
+      background: #202020;
       border-radius: 10px;
       padding: 10px;
     }
 
-    .playlist-item {
+    /* Playlist header inside sidebar */
+    .playlist-header {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 10px;
-      padding: 8px;
+      padding: 5px 10px;
+      background: #282828;
       border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s ease-in-out;
     }
 
-    .playlist-item:hover {
-      background: #272727;
+    .playlist-header svg {
+      width: 20px;
+      height: 20px;
+      fill: #FF0000;
     }
 
-    .playlist-item img {
-      width: 120px;
-      height: 70px;
-      border-radius: 5px;
-      object-fit: cover;
-    }
-
-    .playlist-item span {
-      font-size: 14px;
-      color: #eee;
-      line-height: 1.2;
-    }
-
-    /* Input area */
-    .url-input {
-      display: flex;
-      gap: 10px;
-      padding: 10px;
-      background: #181818;
-    }
-
-    .url-input input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      font-size: 14px;
-    }
-
-    .url-input button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 8px;
-      background: #cc0000;
+    .playlist-title {
+      font-size: 16px;
+      font-weight: bold;
       color: white;
-      font-size: 14px;
+    }
+
+    .video-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 5px;
       cursor: pointer;
+      border-radius: 5px;
       transition: background 0.2s;
     }
 
-    .url-input button:hover {
-      background: #ff0000;
+    .video-item:hover, .video-item.active {
+      background: #383838;
     }
 
-    /* Mobile responsive */
+    .video-item img {
+      width: 120px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .video-title {
+      font-size: 14px;
+      color: white;
+    }
+
     @media (max-width: 768px) {
-      .container {
+      .player-container {
         flex-direction: column;
       }
 
-      #player {
-        width: 100%;
-        aspect-ratio: 16/9;
+      iframe {
+        height: 300px;
       }
 
       .playlist {
-        width: 100%;
-        max-height: 40vh;
+        max-height: 250px;
       }
 
-      .playlist-item img {
+      .video-item img {
         width: 100px;
         height: 60px;
       }
@@ -122,67 +169,73 @@
   </style>
 </head>
 <body>
-  <!-- Input Playlist URL -->
-  <div class="url-input">
-    <input type="text" id="playlistUrl" placeholder="Enter YouTube Playlist URL (https://www.youtube.com/playlist?list=...)" />
+
+  <!-- Header with SVG Logo + Text -->
+  <div class="header">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+      <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"/>
+    </svg>
+    <h1>Playlist Player</h1>
+  </div>
+
+  <div class="input-container">
+    <input type="text" id="playlistUrl" placeholder="Enter YouTube Playlist URL">
     <button onclick="loadPlaylist()">Load Playlist</button>
   </div>
 
-  <!-- Main Layout -->
-  <div class="container">
-    <div id="player"></div>
-    <div class="playlist" id="playlist"></div>
+  <div class="player-container">
+    <iframe id="player" src="" allowfullscreen></iframe>
+    <div class="playlist" id="playlist">
+      <div class="playlist-header">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+          <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"/>
+        </svg>
+        <span class="playlist-title">Playlist</span>
+      </div>
+    </div>
   </div>
 
   <script>
-    let player;
-    let playlistData = [];
     const apiKey = "AIzaSyBlXzWvIupvjgkZ516OYu9SUdzDXrXQoak"; // Replace with your YouTube API Key
+    let playlistData = [];
+    let currentVideoIndex = 0;
 
-    // Load YouTube IFrame Player API
-    let tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
-
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player("player", {
-        height: "390",
-        width: "640",
-        videoId: "",
-        playerVars: { autoplay: 0, controls: 1 },
-      });
-    }
-
-    async function loadPlaylist() {
-      const url = document.getElementById("playlistUrl").value;
-      const playlistId = getPlaylistId(url);
-      if (!playlistId) {
-        alert("Invalid Playlist URL!");
-        return;
-      }
-
-      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&key=${apiKey}`;
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-
-      if (!data.items) {
-        alert("Error loading playlist!");
-        return;
-      }
-
-      playlistData = data.items;
-      displayPlaylist();
-      playVideo(playlistData[0].snippet.resourceId.videoId);
-    }
-
-    function getPlaylistId(url) {
+    function extractPlaylistId(url) {
       const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
       return match ? match[1] : null;
     }
 
+    async function loadPlaylist() {
+      const url = document.getElementById("playlistUrl").value;
+      const playlistId = extractPlaylistId(url);
+
+      if (!playlistId) {
+        alert("Invalid Playlist URL");
+        return;
+      }
+
+      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=30&playlistId=${playlistId}&key=${apiKey}`;
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (!data.items || data.items.length === 0) {
+          alert("Playlist not found or private.");
+          return;
+        }
+
+        playlistData = data.items;
+        displayPlaylist();
+        playVideo(0); // play first video
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load playlist.");
+      }
+    }
+
     function displayPlaylist() {
-      const playlistContainer = document.getElementById("playlist");
-      playlistContainer.innerHTML = "";
+      const playlistDiv = document.getElementById("playlist");
+      playlistDiv.querySelectorAll(".video-item").forEach(el => el.remove());
 
       playlistData.forEach((item, index) => {
         const videoId = item.snippet.resourceId.videoId;
@@ -190,18 +243,32 @@
         const thumbnail = item.snippet.thumbnails.medium.url;
 
         const div = document.createElement("div");
-        div.className = "playlist-item";
+        div.classList.add("video-item");
+        if (index === currentVideoIndex) div.classList.add("active");
+
         div.innerHTML = `
-          <img src="${thumbnail}" alt="Thumbnail">
-          <span>${title}</span>
+          <img src="${thumbnail}" alt="${title}">
+          <div class="video-title">${title}</div>
         `;
-        div.onclick = () => playVideo(videoId);
-        playlistContainer.appendChild(div);
+        div.onclick = () => playVideo(index);
+
+        playlistDiv.appendChild(div);
       });
     }
 
-    function playVideo(videoId) {
-      player.loadVideoById(videoId);
+    function playVideo(index) {
+      if (index < 0 || index >= playlistData.length) return;
+
+      currentVideoIndex = index;
+      const videoId = playlistData[index].snippet.resourceId.videoId;
+      document.getElementById("player").src = 
+        `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0`;
+
+      // Highlight active video
+      const items = document.querySelectorAll(".video-item");
+      items.forEach((el, i) => {
+        el.classList.toggle("active", i === index);
+      });
     }
   </script>
 </body>
