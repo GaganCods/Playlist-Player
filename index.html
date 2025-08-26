@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Playlist Player</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    /* Player section */
+    #player {
+      flex: 2;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* Playlist section */
+    .playlist {
+      flex: 1;
+      max-height: 80vh;
+      overflow-y: auto;
+      background: #181818;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+
+    .playlist-item:hover {
+      background: #272727;
+    }
+
+    .playlist-item img {
+      width: 120px;
+      height: 70px;
+      border-radius: 5px;
+      object-fit: cover;
+    }
+
+    .playlist-item span {
+      font-size: 14px;
+      color: #eee;
+      line-height: 1.2;
+    }
+
+    /* Input area */
+    .url-input {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: #181818;
+    }
+
+    .url-input input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .url-input button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background: #cc0000;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .url-input button:hover {
+      background: #ff0000;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      #player {
+        width: 100%;
+        aspect-ratio: 16/9;
+      }
+
+      .playlist {
+        width: 100%;
+        max-height: 40vh;
+      }
+
+      .playlist-item img {
+        width: 100px;
+        height: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Input Playlist URL -->
+  <div class="url-input">
+    <input type="text" id="playlistUrl" placeholder="Enter YouTube Playlist URL (https://www.youtube.com/playlist?list=...)" />
+    <button onclick="loadPlaylist()">Load Playlist</button>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="container">
+    <div id="player"></div>
+    <div class="playlist" id="playlist"></div>
+  </div>
+
+  <script>
+    let player;
+    let playlistData = [];
+    const apiKey = "AIzaSyBlXzWvIupvjgkZ516OYu9SUdzDXrXQoak"; // Replace with your YouTube API Key
+
+    // Load YouTube IFrame Player API
+    let tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("player", {
+        height: "390",
+        width: "640",
+        videoId: "",
+        playerVars: { autoplay: 0, controls: 1 },
+      });
+    }
+
+    async function loadPlaylist() {
+      const url = document.getElementById("playlistUrl").value;
+      const playlistId = getPlaylistId(url);
+      if (!playlistId) {
+        alert("Invalid Playlist URL!");
+        return;
+      }
+
+      const apiUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&key=${apiKey}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      if (!data.items) {
+        alert("Error loading playlist!");
+        return;
+      }
+
+      playlistData = data.items;
+      displayPlaylist();
+      playVideo(playlistData[0].snippet.resourceId.videoId);
+    }
+
+    function getPlaylistId(url) {
+      const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+      return match ? match[1] : null;
+    }
+
+    function displayPlaylist() {
+      const playlistContainer = document.getElementById("playlist");
+      playlistContainer.innerHTML = "";
+
+      playlistData.forEach((item, index) => {
+        const videoId = item.snippet.resourceId.videoId;
+        const title = item.snippet.title;
+        const thumbnail = item.snippet.thumbnails.medium.url;
+
+        const div = document.createElement("div");
+        div.className = "playlist-item";
+        div.innerHTML = `
+          <img src="${thumbnail}" alt="Thumbnail">
+          <span>${title}</span>
+        `;
+        div.onclick = () => playVideo(videoId);
+        playlistContainer.appendChild(div);
+      });
+    }
+
+    function playVideo(videoId) {
+      player.loadVideoById(videoId);
+    }
+  </script>
+</body>
+</html>
